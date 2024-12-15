@@ -1,0 +1,145 @@
+# Define all services for the application stack
+services:
+  # Service: n8n - Workflow automation tool
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    environment:
+      - N8N_HOST=${N8N_SUBDOMAIN}.${N8N_DOMAIN}
+      - N8N_PORT=5678
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://n8n:5678
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_PROTOCOL=https
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      # Ensure postgres service is healthy before starting n8n
+      postgres:
+        condition: service_healthy
+    ports:
+      # Expose the n8n service on port 5678
+      - "5678:5678"
+    labels:
+      # Traefik configuration for n8n
+      - traefik.enable=true
+      - traefik.http.routers.n8n.rule=Host(`${N8N_SUBDOMAIN}.${N8N_DOMAIN}`)
+      - traefik.http.routers.n8n.tls=true
+      - traefik.http.routers.n8n.entrypoints=web,websecure
+      - traefik.http.routers.n8n.tls.certresolver=mytlschallenge
+      - traefik.http.middlewares.n8n.headers.SSLRedirect=true
+      - traefik.http.middlewares.n8n.headers.STSSeconds=315360000
+      - traefik.http.middlewares.n8n.headers.browserXSSFilter=true
+      - traefik.http.middlewares.n8n.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.n8n.headers.forceSTSHeader=true
+      - traefik.http.middlewares.n8n.headers.SSLHost=${N8N_DOMAIN}
+      - traefik.http.middlewares.n8n.headers.STSIncludeSubdomains=true
+      - traefik.http.middlewares.n8n.headers.STSPreload=true
+    restart: unless-stopped
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  # Service: openwebui - AI assistant interface
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: openwebui
+    environment:
+      - OPENWEBUI_DOMAIN=${OPENWEBUI_DOMAIN}
+    labels:
+      # Traefik configuration for openwebui
+      - traefik.enable=true
+      - traefik.http.routers.openwebui.rule=HostRegexp(`${OPENWEBUI_DOMAIN}`)
+      - traefik.http.routers.openwebui.entrypoints=websecure
+      - traefik.http.routers.openwebui.tls=true
+      - traefik.http.services.openwebui.loadbalancer.server.port=8080
+    volumes:
+      - openwebui_data:/app/backend/data
+    restart: unless-stopped
+    ports:
+      # Expose the openwebui service on port 8080
+      - "8080:8080"
+
+  # Service: traefik - Reverse proxy and load balancer
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    command:
+      # Traefik commands to configure entrypoints, providers, and certificates
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.myresolver.acme.email=${EMAIL}
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.myresolver.acme.tlschallenge=true
+    ports:
+      # Expose ports for HTTP and HTTPS traffic
+      - 443:443
+      - 8081:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/letsencrypt
+    restart: unless-stopped
+
+  # Service: postgres - Database for n8n
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DOMAIN=${POSTGRES_DOMAIN}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.postgres.rule=Host(`${POSTGRES_DOMAIN}`)
+      - traefik.http.routers.postgres.tls=true
+      - traefik.http.routers.postgres.entrypoints=websecure
+      - traefik.http.services.postgres.loadbalancer.server.port=5432
+
+  # Service: qdrant - Vector search engine
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    volumes:
+      - qdrant_data:/qdrant/storage
+      - qdrant_snapshots:/qdrant/snapshots
+    ports:
+      # Expose the Qdrant service on port 6333
+      - "6333:6333"
+    environment:
+      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY}
+    restart: unless-stopped
+    labels:
+      # Traefik configuration for qdrant
+      - traefik.enable=true
+      - traefik.http.routers.qdrant.rule=Host(`${QDRANT_DOMAIN}`)
+      - traefik.http.routers.qdrant.tls=true
+      - traefik.http.routers.qdrant.entrypoints=websecure
+      - traefik.http.services.qdrant.loadbalancer.server.port=6333
+
+# Define persistent volumes for services
+volumes:
+  traefik_data:
+  n8n_data:
+  postgres_data:
+  openwebui_data:
+  qdrant_data:
+  qdrant_snapshots:
