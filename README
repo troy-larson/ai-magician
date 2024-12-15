@@ -1,0 +1,129 @@
+# README for Setting up Docker-Compose for n8n
+
+## Prerequisites
+
+This guide will walk you through setting up n8n with Docker-Compose. No technical expertise is required, and we’ll break everything into simple steps.
+
+## Step 1: Install Git
+
+Git is a tool that helps manage files. Here’s how to get it:
+
+### On macOS
+
+1. Open the Terminal (you can find it by searching for "Terminal" on your Mac).
+2. Type this command and press Enter to see if Git is already installed:
+
+    ```bash
+    git --version
+    ```
+
+If it’s not installed, type this command and press Enter:
+
+    ```bash
+    brew install git
+    ```
+
+Once it’s done, type this to confirm Git is installed:
+
+    ```bash
+    git --version
+    ```
+
+### On Windows
+
+1. Visit [git-scm.com](https://git-scm.com) and click "Download for Windows."
+2. Open the downloaded file and follow the steps to install Git:
+   - Select Git from the command line and also from 3rd-party software when prompted.
+   - The default options work for most users.
+3. Once installed, open Command Prompt (search "Command Prompt" in the Start menu) and type:
+
+   ```bash
+   git --version
+   ```
+
+This will confirm Git is installed.
+
+## Step 2: Install Windows Subsystem for Linux (WSL)
+
+WSL allows you to run Linux commands on Windows, which is required for Docker to work seamlessly. Here’s how to install it:
+
+1. Open PowerShell as Administrator (search "PowerShell" in the Start menu, right-click, and select "Run as Administrator").
+2. Run the following command to install WSL:
+
+   ```bash
+   wsl --install
+   ```
+
+This will install the latest version of WSL and Ubuntu Linux.
+
+Restart your computer if prompted.
+
+After restarting, open PowerShell and check the version:
+
+    ```bash
+    wsl --version
+    ```
+
+Launch WSL by typing:
+
+    ```bash
+    wsl
+    ```
+
+This will open the Linux terminal.
+
+## Step 3: Install Docker
+
+### On macOS
+
+1. Go to [docker.com](https://www.docker.com) and download Docker Desktop for Mac.
+2. Open the downloaded file and drag Docker into your Applications folder.
+3. Open Docker from the Applications folder and follow any setup instructions.
+4. To confirm it’s working, open the Terminal and type:
+
+   ```bash
+   docker --version
+
+docker-compose --version
+
+On Windows
+
+Go to docker.com and download Docker Desktop for Windows.
+
+Run the installer and follow the steps:
+
+Ensure the WSL 2 feature is enabled (Docker Desktop will prompt you to enable it if it’s not already).
+
+Ensure "virtualization" is turned on in your computer’s settings (you might see this in your BIOS/UEFI).
+
+Open Docker Desktop and ensure it’s running.
+
+Open Command Prompt and type:
+
+docker --version
+
+docker-compose --version
+
+Step 4: Check for Docker Compose
+
+Docker Compose might already be installed as part of Docker Desktop. Here’s how to check:
+
+macOS
+
+Open the Terminal and type:
+
+docker-compose --version
+
+If it’s not installed, you can add it with this command:
+
+brew install docker-compose
+
+Windows
+
+Docker Compose is included with Docker Desktop. To confirm, open Command Prompt and type:
+
+docker-compose --version
+
+Next Steps
+
+Now that you’ve installed Git, WSL (for Windows), and Docker, you’re ready to set up Docker-Compose and start running n8n. Follow the next section of this guide for easy setup instructions.
