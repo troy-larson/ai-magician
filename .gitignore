@@ -131,11 +131,7 @@ cython_debug/
 
 # Docker
 *.log
-Dockerfile
-docker-compose.yml
-docker-compose.*.yml
 .dockerignore
-docker-compose.override.yml
 
 # Docker volumes
 volumes/
