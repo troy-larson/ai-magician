@@ -177,3 +177,5 @@ stack_networks/
 
 # Docker stack plugins
 stack_plugins/
+
+.DS_Store
