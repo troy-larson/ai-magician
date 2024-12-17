@@ -25,10 +25,15 @@ services:
     restart: unless-stopped
     volumes:
       - n8n_data:/home/node/.n8n
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   # Service: postgres - Database for n8n
   postgres:
-    image: postgres:latest
+    image: postgres:17
     container_name: postgres
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
@@ -55,10 +60,15 @@ services:
     volumes:
       - openwebui_data:/app/backend/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   # Service: qdrant - Vector search engine
   qdrant:
-    image: qdrant/qdrant
+    image: qdrant/qdrant:latest
     container_name: qdrant
     volumes:
       - qdrant_data:/qdrant/storage
@@ -68,6 +78,11 @@ services:
     environment:
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 # Define persistent volumes for services
 volumes:
