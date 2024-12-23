@@ -1,0 +1,266 @@
+{
+  "name": "Import Tax Code",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1z_4AyD88ji7uGSeFvSSktsCrD0rcIRl1",
+          "mode": "list",
+          "cachedResultName": "RAG Docs",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1z_4AyD88ji7uGSeFvSSktsCrD0rcIRl1"
+        },
+        "event": "fileUpdated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -520,
+        0
+      ],
+      "id": "b9811155-a708-43bb-a785-b7775ae628cc",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0g3bsHMR3Bn2HxSJ",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "98cc7627-7479-4f92-80df-3abe8cef303e",
+              "name": "fileId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -300,
+        0
+      ],
+      "id": "f274d5d8-f4f6-40db-a077-c09b64488645",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.fileId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "bc79b3d1-a353-4242-9491-4b7536410f13",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0g3bsHMR3Bn2HxSJ",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        120,
+        0
+      ],
+      "id": "188d539b-822d-49d1-8fd5-57823c1c1192",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "ai-assistant",
+          "mode": "list",
+          "cachedResultName": "ai-assistant"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1,
+      "position": [
+        360,
+        0
+      ],
+      "id": "d507857a-315b-4df1-961b-20ea18a9e1c1",
+      "name": "Qdrant Vector Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "wGOdbcuOOfXsq8cL",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-large",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.1,
+      "position": [
+        380,
+        200
+      ],
+      "id": "9ac2a556-6139-42df-ae5c-05bec96a26bc",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "XNwuwTJQt5Fjwnpo",
+          "name": "OpenAi Account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $('Extract from File').item.json.text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        560,
+        200
+      ],
+      "id": "aedfdd7f-31e9-4d0e-971c-7afaab516643",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        640,
+        380
+      ],
+      "id": "0c9fcbf6-de82-4fd7-bd74-4f4ecd4d8578",
+      "name": "Recursive Character Text Splitter"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "54ea3b6f-350c-466e-8f63-4b81077cef62",
+  "meta": {
+    "instanceId": "29cdb6f7f849642449767c832201df2a3b4ba47a6c2c2054fe06f551a4329677"
+  },
+  "id": "EtELr6CcxYGY6cbO",
+  "tags": []
+}
